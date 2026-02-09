@@ -5,7 +5,7 @@ from functools import lru_cache
 
 from sqlmodel import Session, SQLModel, create_engine
 
-from core.config import database_url
+from src.core.config import database_url
 
 
 @lru_cache(maxsize=1)

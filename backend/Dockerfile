@@ -1,37 +1,37 @@
-# Use official Python runtime as the base image
 FROM python:3.11-slim
 
-# Set environment variables
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    POETRY_NO_INTERACTION=1 \
-    POETRY_VIRTUALENVS_CREATE=false \
-    POETRY_CACHE_DIR=/tmp/poetry_cache
-
-# Set the working directory
 WORKDIR /app
 
-# Install system dependencies
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        build-essential \
-        libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
+# Create non-root user for security (before installing dependencies)
+RUN groupadd --system --gid 1001 python && \
+    useradd --system --uid 1001 --gid python python
 
-# Copy poetry.lock and pyproject.toml
-COPY pyproject.toml .
+# Upgrade pip
+RUN pip install --upgrade pip
 
-# Install Poetry
-RUN pip install poetry
+# Copy ONLY dependency files first (for layer caching)
+COPY requirements.txt pyproject.toml ./
 
-# Install dependencies
-RUN poetry install --only=main --no-root
+# Install dependencies (this layer is cached unless deps change)
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the application
-COPY . .
+# Copy source code AFTER deps installed (code changes don't bust dep cache)
+COPY --chown=python:python src/ ./src/
 
-# Expose the port the app runs on
-EXPOSE 7860
+# Change ownership to non-root user
+RUN chown -R python:python /app
 
-# Run the application
-CMD ["sh", "-c", "uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-7860}"]
+USER python
+
+# Expose port
+EXPOSE 8000
+
+# Run the app
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+LABEL maintainer="Phase Backend Team" \
+      version="1.0" \
+      description="Production build of Phase backend application"
+
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1

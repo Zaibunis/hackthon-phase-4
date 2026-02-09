@@ -3,6 +3,8 @@ fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
 pydantic>=2.5.0
 pydantic-settings>=2.1.0
+google-generativeai
+
 
 # SQLModel for database operations
 sqlmodel>=0.0.14
