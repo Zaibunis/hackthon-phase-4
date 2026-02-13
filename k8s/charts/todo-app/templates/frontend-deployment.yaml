@@ -51,8 +51,10 @@ spec:
           resources:
             {{- toYaml .Values.frontend.resources | nindent 12 }}
           env:
-            - name: REACT_APP_API_URL
-              value: "http://todo-app-backend:8000"
+            {{- range $key, $value := .Values.frontend.env }}
+            - name: {{ $key }}
+              value: {{ $value | quote }}
+            {{- end }}
       {{- with .Values.frontend.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

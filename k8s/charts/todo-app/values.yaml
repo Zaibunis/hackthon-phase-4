@@ -27,6 +27,8 @@ frontend:
     minReplicas: 1
     maxReplicas: 100
     targetCPUUtilizationPercentage: 80
+  env:
+    REACT_APP_API_URL: "http://todo-app-backend:8000"
   resources: {}
   nodeSelector: {}
   tolerations: []
